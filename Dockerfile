@@ -7,8 +7,20 @@ ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
 RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
+RUN apt-get update && apt-get install -y libmcrypt-dev \
+    libmagickwand-dev libzip-dev zip libfreetype6-dev \
+    libjpeg62-turbo-dev libpng-dev --no-install-recommends \
+    && docker-php-ext-install zip \
+    && pecl install imagick \
+    && docker-php-ext-enable imagick \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install -j$(nproc) gd \ 
+    && docker-php-ext-install pdo_mysql
+
 # install composer
-RUN curl -sS https://getcomposer.org/installer | php composer-setup.php --install-dir=/usr/local/bin --filename=composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+# update composer
+RUN composer self-update
 # install git
 RUN apt install git -y
 # install nodejs
